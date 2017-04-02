@@ -1,0 +1,11 @@
+[package]
+name = "gen"
+version = "0.1.0"
+authors = ["lucy <lucy@luz.lu>"]
+
+[dependencies]
+hyper = "0.10.5"
+
+[[bin]]
+name = "gen"
+path = "main.rs"
