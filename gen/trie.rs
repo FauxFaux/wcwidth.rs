@@ -7,15 +7,9 @@ use std::hash::Hasher;
 use std::io::prelude::*;
 
 const BLOCK_SIZE: usize = 64;
-
-// Subtract two blocks to offset 0x80, the first continuation byte.
 const BLOCK_OFFSET: usize = 2;
-
-// Subtract three blocks to offset 0xC0, the first non-ASCII starter.
 const ROOT_BLOCK_OFFSET: usize = 3;
 
-// Builder builds a set of tries for associating values with runes. The set of
-// tries can share common index and value blocks.
 #[derive(Clone)]
 struct Builder {
     value_type: &'static str,
@@ -30,7 +24,6 @@ struct Builder {
     value_block_idx: HashMap<u64, usize>,
 }
 
-// Trie is a node of the intermediate trie structure.
 #[derive(Clone, Debug)]
 pub struct Trie {
     children: Option<Vec<Option<Rc<RefCell<Trie>>>>>,
@@ -42,7 +35,7 @@ impl Trie {
     pub fn new() -> Trie {
         Trie {
             children: Some(vec![None; BLOCK_SIZE]),
-            values: vec![0; 0x80], // utf8.RuneSelf
+            values: vec![0; 0x80],
             index: 0,
         }
     }
@@ -51,8 +44,6 @@ impl Trie {
         Trie { children: None, values: vec![], index: 0 }
     }
 
-    // Insert associates value with the given rune. Insert will panic if a non-zero
-    // value is passed for an invalid rune.
     pub fn insert(&mut self, r: char, value: u64) {
         if value == 0 { return; } 
 
@@ -130,8 +121,7 @@ impl Trie {
 
 impl Builder {
     fn build(&mut self) {
-        // Compute the sizes of the values.
-        let vmax = max_value(&Some(Rc::new(RefCell::new(self.trie.clone()))), 0);
+        let vmax = max_value(&self.trie, 0);
         self.value_type = get_int_type(vmax);
 
         self.value_blocks.push(self.trie.values[..BLOCK_SIZE].to_vec());
@@ -159,10 +149,10 @@ impl Builder {
         // We special-case the cases where all values recursively are 0. This allows
         // for the use of a zero block to which all such values can be directed.
         let mut hasher = DHasher::new();
-        for c in n.borrow().children.as_ref().unwrap_or(&vec![]).clone() {
+        for c in n.borrow().children.as_ref().unwrap_or(&vec![]) {
             let v = match c {
-                Some(ref n) => self.compute_offsets(n.clone(), false),
-                None => 0,
+                &Some(ref n) => self.compute_offsets(n.clone(), false),
+                &None => 0,
             };
             hasher.write_u64(v);
         }
@@ -171,7 +161,6 @@ impl Builder {
 
         if first { self.index_block_idx.insert(hash, ROOT_BLOCK_OFFSET - BLOCK_OFFSET); }
 
-        // Compacters don't apply to internal nodes.
         if n.borrow().children.is_some() {
             let v = match self.index_block_idx.get(&hash) {
                 Some(&v) => v,
@@ -200,16 +189,14 @@ impl Builder {
     }
 }
 
-fn max_value(n: &Option<Rc<RefCell<Trie>>>, mut max: u64) -> u64 {
-    if n.is_none() { return max; }
-    let n = n.clone().unwrap();
-    if n.borrow().children.is_some() {
-        for c in n.borrow().children.as_ref().unwrap() {
-            max = max_value(&c, max);
+fn max_value(n: &Trie, mut max: u64) -> u64 {
+    if n.children.is_some() {
+        for c in n.children.as_ref().unwrap() {
+            max = c.as_ref().map_or(max, |t| max_value(&*t.borrow(), max));
         }
     }
-    if n.borrow().values.len() != 0 {
-        for &v in &n.borrow().values {
+    if n.values.len() != 0 {
+        for &v in &n.values {
             if max < v { max = v; }
         }
     }
