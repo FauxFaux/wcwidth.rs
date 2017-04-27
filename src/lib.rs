@@ -1,23 +1,37 @@
-mod tables;
+//! Fast implementations of wcwidth and wcswidth.
+//!
+//! See https://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c for further information.
+//! This package is based on codegen from https://github.com/golang/text/ and
+//! the python implementation at https://github.com/jquast/wcwidth.
 
-pub fn char_width(c: char) -> i8 {
+/// Implements wcwidth as defined in the Single UNIX Specification.
+///
+/// Returns `Some(0)` for zero-width characters and characters that have no
+/// effect on the terminal (like `'\0'`), `None` for control codes, and `Some(1)`
+/// or `Some(2)` for printable characters.
+pub fn char_width(c: char) -> Option<u8> {
     let mut b = [0u8; 4];
     let (v, _) = lookup_bytes(c.encode_utf8(&mut b).as_bytes());
-    v
+    if v != -1 { Some(v as u8) } else { None }
 }
 
-pub fn str_width(s: &str) -> isize {
+/// Implements wcswidth.
+///
+/// Returns `None` if `s` contains any non-printable characters.
+pub fn str_width(s: &str) -> Option<usize> {
     let s = s.as_bytes();
     let mut w = 0;
     let mut i = 0;
     while i < s.len() {
         let (v, z) = lookup_bytes(s);
-        if v == -1 { return -1; }
-        w += v as isize;
+        if v == -1 { return None; }
+        w += v as usize;
         i += z;
     }
-    w
+    Some(w)
 }
+
+mod tables;
 
 macro_rules! i { ($a:ident[$n:expr, $b:expr]) => ($a[(($n as usize) << 6) + ($b as usize)]) }
 
