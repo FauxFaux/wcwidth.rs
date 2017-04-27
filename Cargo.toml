@@ -1,9 +1,9 @@
 [package]
-name = "wcwidth"
-version = "0.1.0"
 authors = ["lucy <lucy@luz.lu>"]
-
-[dependencies]
-
-[lib]
+description = "Fast implementations of wcwidth and wcswidth."
+documentation = "https://docs.rs/wcwidth"
+include = ["src/*.rs", "Cargo.toml"]
+license-file = "LICENSE"
 name = "wcwidth"
+repository = "https://github.com/lucy/wcwidth.rs"
+version = "1.0.0"
