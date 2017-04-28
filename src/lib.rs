@@ -23,7 +23,7 @@ pub fn str_width(s: &str) -> Option<usize> {
     let mut w = 0;
     let mut i = 0;
     while i < s.len() {
-        let (v, z) = lookup_bytes(s);
+        let (v, z) = lookup_bytes(&s[i..]);
         if v == -1 { return None; }
         w += v as usize;
         i += z;
