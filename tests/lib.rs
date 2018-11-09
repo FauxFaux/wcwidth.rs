@@ -13,6 +13,9 @@ const STRING_TESTS: &[(&str, &[Option<u8>], Option<usize>)] = &[
     ("cafe\u{0301}", &[S1, S1, S1, S1, S0], Some(4)),
     ("\u{0410}\u{0488}", &[S1, S0], Some(1)),
     ("\u{1B13}\u{1B28}\u{1B2E}\u{1B44}", &[S1, S1, S1, S1], Some(4)),
+
+    // an emoji from Unicode 11 (2018)
+    ("\u{1F975}", &[S2], Some(2)),
 ];
 
 #[test]
