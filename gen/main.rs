@@ -1,4 +1,4 @@
-extern crate hyper;
+extern crate reqwest;
 
 use std::cmp;
 use std::fs::File;
@@ -46,10 +46,9 @@ fn add_range(v: &mut Vec<(u32, u32)>, (start, end): (u32, u32)) {
     v.push((start, end));
 }
 
-fn fetch(url: &str) -> hyper::client::Response {
-    let client = hyper::Client::new();
-    let res = client.get(url).send().unwrap();
-    assert_eq!(res.status, hyper::Ok);
+fn fetch(url: &str) -> reqwest::Response {
+    let res = reqwest::get(url).unwrap();
+    assert_eq!(res.status(), 200);
     res
 }
 

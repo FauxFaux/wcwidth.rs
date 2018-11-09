@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["lucy <lucy@luz.lu>"]
 
 [dependencies]
-hyper = "0.10.5"
+reqwest = "0.9.4"
 
 [[bin]]
 name = "gen"
